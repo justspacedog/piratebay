@@ -62,8 +62,8 @@ export default function Command() {
   const [page, setPage] = useState<string>("1");
 
   useEffect(() => {
+    setLoading(true);
     async function fetch() {
-      setLoading(true);
       if (page != undefined) {
         if (!query) {
           setQuery("*");
@@ -86,7 +86,6 @@ export default function Command() {
           });
         } finally {
           try {
-            setLoading(true);
             await searchPages(encodeURI(query), {
               baseURL: preferences.instance.value != null ? (preferences.instance.value as string) : "",
               sortby: preferences.sortby.value != null ? (preferences.sortby.value as string) : "",
@@ -115,7 +114,8 @@ export default function Command() {
       onSearchTextChange={(text) => {
         setQuery(text);
       }}
-      throttle
+      throttle={true}
+      isLoading={loading}
       searchBarPlaceholder="Search entry..."
       searchBarAccessory={
         <List.Dropdown

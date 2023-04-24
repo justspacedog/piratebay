@@ -53,7 +53,8 @@ export default function Command() {
       onSearchTextChange={(text) => {
         setQuery(text);
       }}
-      throttle
+      throttle={true}
+      isLoading={loading}
       searchBarPlaceholder="Search entry..."
       searchBarAccessory={
         <List.Dropdown

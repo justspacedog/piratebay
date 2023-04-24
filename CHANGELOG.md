@@ -1,5 +1,9 @@
 # Piratebay Changelog
 
+## [Version 1.1.1] - 2023-04-24
+
+- NEW: show loading indicator
+
 ## [Version 1.1] - 2023-04-12
 
 - NEW: UI tweaks (useful tooltips for each list entry, show textual loading info in the detail view, shorter tag types).
