@@ -1,4 +1,4 @@
-import { List, showToast, Toast, preferences } from "@raycast/api";
+import { List, showToast, Toast, preferences, LaunchProps } from "@raycast/api";
 import cheerio from "cheerio";
 import { useEffect, useState } from "react";
 import nodeFetch from "node-fetch";
@@ -53,8 +53,8 @@ async function searchPages(q = "", { fetch = nodeFetch, baseURL = "", sortby = "
   return pages;
 }
 
-export default function Command() {
-  const [query, setQuery] = useState<null | string>(null);
+export default function Command(props: LaunchProps) {
+  const [query, setQuery] = useState<string>(props.fallbackText ?? "");
   const [state, setState] = useState<Torrent[]>([]);
   const [entries, setEntries] = useState<Torrent[]>([]);
   const [pages, setPages] = useState<Pages[]>([]);
@@ -62,7 +62,6 @@ export default function Command() {
   const [page, setPage] = useState<string>("1");
 
   useEffect(() => {
-    setLoading(true);
     async function fetch() {
       if (page != undefined) {
         if (!query) {
@@ -71,6 +70,8 @@ export default function Command() {
           return;
         }
         try {
+          setLoading(true);
+          controllToast(query === "*" ? "Fetching trending articles" : `Searching for "` + query + `"`, true);
           await search(encodeURI(query), {
             baseURL: preferences.instance.value != null ? (preferences.instance.value as string) : "", // default https://thepiratebay.org
             page: Number(page), // default 0
@@ -98,9 +99,9 @@ export default function Command() {
               title: "Failed to fetch entries",
               message: "Please try again later",
             });
-          } finally {
-            setLoading(false);
           }
+          setLoading(false);
+          controllToast("", false);
         }
       }
     }
@@ -140,12 +141,22 @@ export default function Command() {
         return (
           <List.Item
             key={entry.link}
-            title={{value:entry.name, tooltip: "Category: " + entry.type}}
+            title={{ value: entry.name, tooltip: "Category: " + entry.type }}
             accessories={EntryAccessories(entry)}
-            actions={EntryActions(entry)}
+            actions={EntryActions(entry, query !== null ? query : "", false)}
           />
         );
       })}
     </List>
   );
+}
+
+async function controllToast(title: string, loading: Boolean) {
+  const toast = await showToast({
+    style: Toast.Style.Animated,
+    title: title,
+  });
+  if (!loading) {
+    toast.hide();
+  }
 }

@@ -3,7 +3,10 @@ import cheerio from "cheerio";
 import nodeFetch from "node-fetch";
 import TorrentPage from "./torrent-page";
 
-export default async function search(q = "", { fetch = nodeFetch, baseURL = "", page = 0, category = 0, sortby = "7" } = {}) {
+export default async function search(
+  q = "",
+  { fetch = nodeFetch, baseURL = "", page = 0, category = 0, sortby = "7" } = {}
+) {
   if (!fetch) {
     throw new Error("piratebay-search: No fetch implementation provided");
   }
@@ -46,24 +49,27 @@ export default async function search(q = "", { fetch = nodeFetch, baseURL = "", 
           }
         });
     }
-    
-    const description = $(this).find("font.detDesc").text()
-    
+
+    const description = $(this).find("font.detDesc").text();
+
     const torrent = {
       name: $(this).find("a.detLink").text(),
-      type: $(this).find("td.vertTh").text().trim().replace(/\s+\((.*)\)/m, ` > $1`),
+      type: $(this)
+        .find("td.vertTh")
+        .text()
+        .trim()
+        .replace(/\s+\((.*)\)/m, ` > $1`),
       link: $(this).find("a.detLink").attr("href") || "", // use empty string if undefined
       seedersCount: $(this).children("td:nth-child(3)").text(),
       leechersCount: $(this).children("td:nth-child(4)").text(),
-      uploadedBy: description
-      .replace(/.*ULed by *(.*)..*/gm, `$1`),
-      uploadedAt: new Date(description
-        .replace(/.*Uploaded (.*?),.*/gm, `$1`)
-        .replace(" ", "-")
-        .replace(/\d\d:\d\d/g, new Date().getFullYear().toString())),
-      size: description
-      .replace(/.*Size (.*),.*/gm, `$1`)
-      .replace("i", ''),
+      uploadedBy: description.replace(/.*ULed by *(.*)..*/gm, `$1`),
+      uploadedAt: new Date(
+        description
+          .replace(/.*Uploaded (.*?),.*/gm, `$1`)
+          .replace(" ", "-")
+          .replace(/\d\d:\d\d/g, new Date().getFullYear().toString())
+      ),
+      size: description.replace(/.*Size (.*),.*/gm, `$1`).replace("i", ""),
       magnet: $(this).find('a[href^="magnet"]').attr("href") || "", // use empty string if undefined
       isVip: icons.includes("vip"),
       isTrusted: icons.includes("trusted"),
@@ -145,31 +151,34 @@ export function EntryAccessories(torrent: Torrent) {
     : "Uploaded by: " + torrent.uploadedBy;
 
   if (torrent.hasComments) {
-    return ([
-      { icon: Icon.Upload, text: torrent.seedersCount, tooltip: "Seeders: " + torrent.seedersCount},
-      { icon: Icon.Download, text: torrent.leechersCount, tooltip: "Leechers: " + torrent.leechersCount},
+    return [
+      { icon: Icon.Upload, text: torrent.seedersCount, tooltip: "Seeders: " + torrent.seedersCount },
+      { icon: Icon.Download, text: torrent.leechersCount, tooltip: "Leechers: " + torrent.leechersCount },
       {
         icon: Icon.MemoryStick,
         text: torrent.size.replace(/\..* /gm, " "),
         tooltip: "Size: " + torrent.size,
       },
-      { tag: { value: torrent.commentsCount.toString(), color: Color.Yellow }, tooltip: "Comments: " + torrent.commentsCount.toString() },
+      {
+        tag: { value: torrent.commentsCount.toString(), color: Color.Yellow },
+        tooltip: "Comments: " + torrent.commentsCount.toString(),
+      },
       { tag: { value: tagText, color: tagColor }, tooltip: tagTooltip },
       {
-        tag: {value: torrent.uploadedAt}, tooltip: "Uploaded at: " + new Date(torrent.uploadedAt).toLocaleDateString(
-            "de-DE",
-            {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            }
-          )
-        },
-    ]);
+        tag: { value: torrent.uploadedAt },
+        tooltip:
+          "Uploaded at: " +
+          new Date(torrent.uploadedAt).toLocaleDateString("de-DE", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          }),
+      },
+    ];
   } else {
-    return ([
-      { icon: Icon.Upload, text: torrent.seedersCount, tooltip: "Seeders: " + torrent.seedersCount},
-      { icon: Icon.Download, text: torrent.leechersCount, tooltip: "Leechers: " + torrent.leechersCount},
+    return [
+      { icon: Icon.Upload, text: torrent.seedersCount, tooltip: "Seeders: " + torrent.seedersCount },
+      { icon: Icon.Download, text: torrent.leechersCount, tooltip: "Leechers: " + torrent.leechersCount },
       {
         icon: Icon.MemoryStick,
         text: torrent.size.replace(/\..* /gm, " "),
@@ -177,32 +186,69 @@ export function EntryAccessories(torrent: Torrent) {
       },
       { tag: { value: tagText, color: tagColor }, tooltip: tagTooltip },
       {
-        tag: {value: torrent.uploadedAt}, tooltip: "Uploaded at: " + new Date(torrent.uploadedAt).toLocaleDateString(
-            "de-DE",
-            {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            }
-          )
-        },
-    ]);
+        tag: { value: torrent.uploadedAt },
+        tooltip:
+          "Uploaded at: " +
+          new Date(torrent.uploadedAt).toLocaleDateString("de-DE", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          }),
+      },
+    ];
   }
 }
 
-export function EntryActions(torrent: Torrent) {
-  return (
-    <ActionPanel>
-      <Action.Push icon={Icon.Book} title="Read Details" target={<TorrentPage torrent={torrent} />} />
-      <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.magnet} />
-      <Action.Open
-        icon={Icon.Globe}
-        title="Open Entry in Browser"
-        target={torrent.link}
-        shortcut={{ modifiers: ["opt"], key: "enter" }}
-      />
-    </ActionPanel>
-  );
+export function EntryActions(torrent: Torrent, query: string, category: Boolean) {
+  if (category) {
+    return (
+      <ActionPanel>
+        <Action.Push
+          icon={Icon.Book}
+          title="Read Details"
+          target={<TorrentPage torrent={torrent} query={query} />}
+          shortcut={{ modifiers: [], key: "arrowRight" }}
+        />
+        <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.magnet} />
+        <Action.Open
+          icon={Icon.Globe}
+          title="Open Entry in Browser"
+          target={torrent.link}
+          shortcut={{ modifiers: ["opt"], key: "enter" }}
+        />
+        <Action.Open
+          icon={Icon.Switch}
+          title={`Switch to Search By Page`}
+          target={"raycast://extensions/spacedog/piratebay/page?fallbackText=" + encodeURI(query)}
+          shortcut={{ modifiers: ["cmd"], key: "s" }}
+        />
+      </ActionPanel>
+    );
+  } else {
+    return (
+      <ActionPanel>
+        <Action.Push
+          icon={Icon.Book}
+          title="Read Details"
+          target={<TorrentPage torrent={torrent} query={query} />}
+          shortcut={{ modifiers: [], key: "arrowRight" }}
+        />
+        <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.magnet} />
+        <Action.Open
+          icon={Icon.Globe}
+          title="Open Entry in Browser"
+          target={torrent.link}
+          shortcut={{ modifiers: ["opt"], key: "enter" }}
+        />
+        <Action.Open
+          icon={Icon.Switch}
+          title={`Switch to Search By Category`}
+          target={"raycast://extensions/spacedog/piratebay/category?fallbackText=" + encodeURI(query)}
+          shortcut={{ modifiers: ["cmd"], key: "s" }}
+        />
+      </ActionPanel>
+    );
+  }
 }
 
 export type Torrent = {

@@ -1,22 +1,39 @@
-import { Icon, Color, Detail, List, showToast, Toast, Action, ActionPanel, preferences } from "@raycast/api";
+import {
+  Icon,
+  Color,
+  Detail,
+  List,
+  showToast,
+  Toast,
+  Action,
+  ActionPanel,
+  preferences,
+  useNavigation,
+} from "@raycast/api";
 import cheerio from "cheerio";
 import { useEffect, useState } from "react";
 import { useFetch } from "@raycast/utils";
 import nodeFetch from "node-fetch";
-import {Torrent} from "./piratebay-search";
+import { Torrent } from "./piratebay-search";
 
-export default function TorrentPage(torrent: {torrent: Torrent}) {
-  const [searchText, setSearchText] = useState("");
-  const { isLoading, data } = useFetch(torrent.torrent.link, {
+type TorrentPageProps = {
+  torrent: Torrent;
+  query: string;
+};
+
+export default function TorrentPage(props: TorrentPageProps) {
+  const { torrent, query } = props;
+  const { isLoading, data } = useFetch(torrent.link, {
     // to make sure the screen isn't flickering when the searchText changes
     keepPreviousData: true,
     initialData: "",
   });
 
   const $ = cheerio.load(String(data));
+  controllToast(true);
 
   // ÜBERSCHRIFT
-  let markdown = "# " + torrent.torrent.name + "\n";
+  let markdown = "# " + torrent.name + "\n";
 
   // Parse NFO
   let nfo = "";
@@ -72,16 +89,20 @@ export default function TorrentPage(torrent: {torrent: Torrent}) {
     details.push(detailEntry);
   }
 
-  const tagText = torrent.torrent.isVip ? "VIP" : torrent.torrent.isTrusted ? "Trusted" : "NONE";
-  const tagColor = torrent.torrent.isVip ? Color.Green : torrent.torrent.isTrusted ? Color.Magenta : Color.SecondaryText;
+  const tagText = torrent.isVip ? "VIP" : torrent.isTrusted ? "Trusted" : "NONE";
+  const tagColor = torrent.isVip ? Color.Green : torrent.isTrusted ? Color.Magenta : Color.SecondaryText;
+
+  if (!isLoading) {
+    controllToast(false);
+  }
 
   if (details.some((d) => d.title)) {
     // WAIT TILL WE HAVE THE DETAILS
-    if (torrent.torrent.hasComments) {
+    if (torrent.hasComments) {
       //LOADED WITH COMMENTS
       return (
         <Detail
-          navigationTitle={torrent.torrent.name}
+          navigationTitle={torrent.name}
           isLoading={isLoading}
           markdown={markdown}
           metadata={
@@ -115,7 +136,11 @@ export default function TorrentPage(torrent: {torrent: Torrent}) {
                 title="Uploaded"
                 text={
                   (details.find((detail) => detail.title === "Uploaded")?.value ?? "") &&
-                  new Date(new Date(details.find((detail) => detail.title === "Uploaded")?.value ?? "").getTime() - (60 * 60 * 1000)).toLocaleDateString( // UTC Timecode -> -1h
+                  new Date(
+                    new Date(details.find((detail) => detail.title === "Uploaded")?.value ?? "").getTime() -
+                      60 * 60 * 1000
+                  ).toLocaleDateString(
+                    // UTC Timecode -> -1h
                     "de-DE",
                     {
                       day: "2-digit",
@@ -152,14 +177,14 @@ export default function TorrentPage(torrent: {torrent: Torrent}) {
               <Detail.Metadata.Label title="Latest Comment" text={latestComment} />
             </Detail.Metadata>
           }
-          actions={EntryActions(torrent)}
+          actions={EntryActions(torrent, query !== null ? query : "")}
         />
       );
     } else {
       //LOADED WITHOUT COMMENTS"
       return (
         <Detail
-          navigationTitle={torrent.torrent.name}
+          navigationTitle={torrent.name}
           isLoading={isLoading}
           markdown={markdown}
           metadata={
@@ -193,7 +218,11 @@ export default function TorrentPage(torrent: {torrent: Torrent}) {
                 title="Uploaded"
                 text={
                   (details.find((detail) => detail.title === "Uploaded")?.value ?? "") &&
-                  new Date(new Date(details.find((detail) => detail.title === "Uploaded")?.value ?? "").getTime() - (60 * 60 * 1000)).toLocaleDateString( // UTC Timecode -> -1h
+                  new Date(
+                    new Date(details.find((detail) => detail.title === "Uploaded")?.value ?? "").getTime() -
+                      60 * 60 * 1000
+                  ).toLocaleDateString(
+                    // UTC Timecode -> -1h
                     "de-DE",
                     {
                       day: "2-digit",
@@ -217,7 +246,7 @@ export default function TorrentPage(torrent: {torrent: Torrent}) {
               />
             </Detail.Metadata>
           }
-          actions={EntryActions(torrent)}
+          actions={EntryActions(torrent, query !== null ? query : "")}
         />
       );
     }
@@ -225,47 +254,65 @@ export default function TorrentPage(torrent: {torrent: Torrent}) {
     //LOADING (without any placeholder for comments, because it would not be updates)
     return (
       <Detail
-        navigationTitle={torrent.torrent.name}
+        navigationTitle={torrent.name}
         isLoading={isLoading}
-        markdown={"# " + torrent.torrent.name + "\n*Details are loading…*"}
+        markdown={"# " + torrent.name + "\n*Details are loading…*"}
         metadata={
           <Detail.Metadata>
-            <Detail.Metadata.Label title="Type" text={torrent.torrent.type} />
+            <Detail.Metadata.Label title="Type" text={torrent.type} />
             <Detail.Metadata.Label title="Files" text={"…"} />
-            <Detail.Metadata.Label title="Size" text={torrent.torrent.size} />
+            <Detail.Metadata.Label title="Size" text={torrent.size} />
             <Detail.Metadata.Label title="Info Hash" text={"…"} />
             <Detail.Metadata.Label
               title="Uploaded"
-              text={new Date(torrent.torrent.uploadedAt).toLocaleDateString("de-DE", {
+              text={new Date(torrent.uploadedAt).toLocaleDateString("de-DE", {
                 day: "2-digit",
                 month: "2-digit",
                 year: "numeric",
               })}
             />
-            <Detail.Metadata.Label title="By" text={torrent.torrent.uploadedBy} />
-              <Detail.Metadata.TagList title="Tag">
-                <Detail.Metadata.TagList.Item text={tagText} color={tagColor} />
-              </Detail.Metadata.TagList>
-            <Detail.Metadata.Label title="Seeders" text={torrent.torrent.seedersCount} />
-            <Detail.Metadata.Label title="Leechers" text={torrent.torrent.leechersCount} />
+            <Detail.Metadata.Label title="By" text={torrent.uploadedBy} />
+            <Detail.Metadata.TagList title="Tag">
+              <Detail.Metadata.TagList.Item text={tagText} color={tagColor} />
+            </Detail.Metadata.TagList>
+            <Detail.Metadata.Label title="Seeders" text={torrent.seedersCount} />
+            <Detail.Metadata.Label title="Leechers" text={torrent.leechersCount} />
           </Detail.Metadata>
         }
-        actions={EntryActions(torrent)}
+        actions={EntryActions(torrent, query !== null ? query : "")}
       />
     );
   }
 }
 
-function EntryActions(torrent: {torrent: Torrent}) {
+function EntryActions(torrent: Torrent, query: string) {
+  const backTitel = query === "*" ? "Back to Trending Items" : `Back to search "` + query + `"`;
+  const { pop } = useNavigation();
   return (
     <ActionPanel>
-      <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.torrent.magnet} />
+      <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.magnet} />
       <Action.Open
         icon={Icon.Globe}
         title="Open Entry in Browser"
-        target={torrent.torrent.link}
+        target={torrent.link}
         shortcut={{ modifiers: ["opt"], key: "enter" }}
+      />
+      <Action
+        icon={Icon.ArrowLeftCircleFilled}
+        title={backTitel}
+        onAction={pop}
+        shortcut={{ modifiers: [], key: "arrowLeft" }}
       />
     </ActionPanel>
   );
+}
+
+async function controllToast(loading: Boolean) {
+  const toast = await showToast({
+    style: Toast.Style.Animated,
+    title: "Loading description",
+  });
+  if (!loading) {
+    toast.hide();
+  }
 }

@@ -1,10 +1,10 @@
-import { List, showToast, Toast, preferences } from "@raycast/api";
+import { List, showToast, Toast, preferences, LaunchProps } from "@raycast/api";
 import { useEffect, useState } from "react";
 import search from "./piratebay-search";
 import { Torrent, EntryAccessories, EntryActions, categories } from "./piratebay-search";
 
-export default function Command() {
-  const [query, setQuery] = useState<null | string>(null);
+export default function Command(props: LaunchProps) {
+  const [query, setQuery] = useState<string>(props.fallbackText ?? ""); // if we came here by switching
   const [state, setState] = useState<Torrent[]>([]);
   const [entries, setEntries] = useState<Torrent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +12,6 @@ export default function Command() {
 
   useEffect(() => {
     async function fetch() {
-      setLoading(true);
       if (category != undefined) {
         if (!query) {
           setQuery("*");
@@ -21,6 +20,7 @@ export default function Command() {
         } else {
           try {
             setLoading(true);
+            controllToast(query === "*" ? "Fetching trending articles" : `Searching for "` + query + `"`, true);
             await search(encodeURI(query), {
               baseURL: preferences.instance.value != null ? (preferences.instance.value as string) : "",
               page: 0, // default 0
@@ -37,6 +37,7 @@ export default function Command() {
             });
           } finally {
             setLoading(false);
+            controllToast("", false);
           }
         }
       }
@@ -70,17 +71,26 @@ export default function Command() {
         </List.Dropdown>
       }
     >
+      {entries.map((entry: Torrent) => {
+        return (
+          <List.Item
+            key={entry.link}
+            title={{ value: entry.name, tooltip: "Category: " + entry.type }}
+            accessories={EntryAccessories(entry)}
+            actions={EntryActions(entry, query !== null ? query : "", true)}
+          />
+        );
+      })}
+    </List>
+  );
+}
 
-          {entries.map((entry: Torrent) => {
-            return (
-              <List.Item
-                key={entry.link}
-                title={{value:entry.name, tooltip: "Category: " + entry.type}}
-                accessories={EntryAccessories(entry)}
-                actions={EntryActions(entry)}
-              />
-            );
-          })}
-        </List>
-      );
-    }
+async function controllToast(title: string, loading: Boolean) {
+  const toast = await showToast({
+    style: Toast.Style.Animated,
+    title: title,
+  });
+  if (!loading) {
+    toast.hide();
+  }
+}

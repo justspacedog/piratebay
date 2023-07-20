@@ -1,4 +1,4 @@
-# Piratebay
+# Piratebay Extension
 
 ## Overview
 Search Piratebay with [Raycast](https://www.raycast.com/).
