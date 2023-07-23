@@ -71,7 +71,7 @@ export default function Command(props: LaunchProps) {
         }
         try {
           setLoading(true);
-          controllToast(query === "*" ? "Fetching trending articles" : `Searching for "` + query + `"`, true);
+          controllToast(query === "*" ? "Loading Trending Items" : `Searching for "` + query + `"`, true);
           await search(encodeURI(query), {
             baseURL: preferences.instance.value != null ? (preferences.instance.value as string) : "", // default https://thepiratebay.org
             page: Number(page), // default 0
@@ -117,7 +117,7 @@ export default function Command(props: LaunchProps) {
       }}
       throttle={true}
       isLoading={loading}
-      searchBarPlaceholder="Search entry..."
+      searchBarPlaceholder="Search..."
       searchBarAccessory={
         <List.Dropdown
           tooltip="Select Page"
