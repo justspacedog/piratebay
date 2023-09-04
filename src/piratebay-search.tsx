@@ -201,53 +201,105 @@ export function EntryAccessories(torrent: Torrent) {
 
 export function EntryActions(torrent: Torrent, query: string, category: Boolean) {
   if (category) {
-    return (
-      <ActionPanel>
-        <Action.Push
-          icon={Icon.Book}
-          title="Read Details"
-          target={<TorrentPage torrent={torrent} query={query} />}
-          shortcut={{ modifiers: [], key: "arrowRight" }}
-        />
-        <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.magnet} />
-        <Action.Open
-          icon={Icon.Globe}
-          title="Open Entry in Browser"
-          target={torrent.link}
-          shortcut={{ modifiers: ["opt"], key: "enter" }}
-        />
-        <Action.Open
-          icon={Icon.Switch}
-          title={`Switch to Search By Page`}
-          target={"raycast://extensions/spacedog/piratebay/page?fallbackText=" + encodeURI(query)}
-          shortcut={{ modifiers: ["cmd"], key: "s" }}
-        />
-      </ActionPanel>
-    );
+    if (query) {
+      return (
+        <ActionPanel>
+          <Action.Push
+            icon={Icon.Book}
+            title="Read Details"
+            target={<TorrentPage torrent={torrent} query={query} />}
+            // shortcut={{ modifiers: [], key: "arrowRight" }}
+          />
+          <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.magnet} />
+          <Action.Open
+            icon={Icon.Globe}
+            title="Open Entry in Browser"
+            target={torrent.link}
+            shortcut={{ modifiers: ["opt"], key: "enter" }}
+          />
+          <Action.Open
+            icon={Icon.Switch}
+            title={`Switch to Search By Page`}
+            target={"raycast://extensions/spacedog/piratebay/page?fallbackText=" + encodeURI(query)}
+            shortcut={{ modifiers: ["cmd"], key: "s" }}
+          />
+        </ActionPanel>
+      );
+    } else {
+      return (
+        <ActionPanel>
+          <Action.Push
+            icon={Icon.Book}
+            title="Read Details"
+            target={<TorrentPage torrent={torrent} query={query} />}
+            shortcut={{ modifiers: [], key: "arrowRight" }}
+          />
+          <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.magnet} />
+          <Action.Open
+            icon={Icon.Globe}
+            title="Open Entry in Browser"
+            target={torrent.link}
+            shortcut={{ modifiers: ["opt"], key: "enter" }}
+          />
+          <Action.Open
+            icon={Icon.Switch}
+            title={`Switch to Search By Page`}
+            target={"raycast://extensions/spacedog/piratebay/page?fallbackText=" + encodeURI(query)}
+            shortcut={{ modifiers: ["cmd"], key: "s" }}
+          />
+        </ActionPanel>
+      );
+    }
   } else {
-    return (
-      <ActionPanel>
-        <Action.Push
-          icon={Icon.Book}
-          title="Read Details"
-          target={<TorrentPage torrent={torrent} query={query} />}
-          shortcut={{ modifiers: [], key: "arrowRight" }}
-        />
-        <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.magnet} />
-        <Action.Open
-          icon={Icon.Globe}
-          title="Open Entry in Browser"
-          target={torrent.link}
-          shortcut={{ modifiers: ["opt"], key: "enter" }}
-        />
-        <Action.Open
-          icon={Icon.Switch}
-          title={`Switch to Search By Category`}
-          target={"raycast://extensions/spacedog/piratebay/category?fallbackText=" + encodeURI(query)}
-          shortcut={{ modifiers: ["cmd"], key: "s" }}
-        />
-      </ActionPanel>
-    );
+    if (query) {
+      return (
+        <ActionPanel>
+          <Action.Push
+            icon={Icon.Book}
+            title="Read Details"
+            target={<TorrentPage torrent={torrent} query={query} />}
+            // shortcut={{ modifiers: [], key: "arrowRight" }}
+          />
+          <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.magnet} />
+          <Action.Open
+            icon={Icon.Globe}
+            title="Open Entry in Browser"
+            target={torrent.link}
+            shortcut={{ modifiers: ["opt"], key: "enter" }}
+          />
+          <Action.Open
+            icon={Icon.Switch}
+            title={`Switch to Search By Category`}
+            target={"raycast://extensions/spacedog/piratebay/category?fallbackText=" + encodeURI(query)}
+            shortcut={{ modifiers: ["cmd"], key: "s" }}
+          />
+        </ActionPanel>
+      );
+    } else {
+      return (
+        <ActionPanel>
+          <Action.Push
+            icon={Icon.Book}
+            title="Read Details"
+            target={<TorrentPage torrent={torrent} query={query} />}
+            shortcut={{ modifiers: [], key: "arrowRight" }}
+          />
+          <Action.Open icon={Icon.Logout} title="Open Magnet Link" target={torrent.magnet} />
+          <Action.Open
+            icon={Icon.Globe}
+            title="Open Entry in Browser"
+            target={torrent.link}
+            shortcut={{ modifiers: ["opt"], key: "enter" }}
+          />
+          <Action.Open
+            icon={Icon.Switch}
+            title={`Switch to Search By Category`}
+            target={"raycast://extensions/spacedog/piratebay/category?fallbackText=" + encodeURI(query)}
+            shortcut={{ modifiers: ["cmd"], key: "s" }}
+          />
+        </ActionPanel>
+      );
+    }
   }
 }
 
